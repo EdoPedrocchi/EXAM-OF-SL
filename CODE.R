@@ -372,29 +372,9 @@ cor(data[, sapply(data, is.numeric)])
       
       
       
-      ####da qua modificare
-      
-      
-      
-      
-      # Generate predictions on the test set
-      nn_pred <- compute(nn_cv, test_cv[, -which(names(test_cv) == "Flag")])
-      
-      # Extract predicted results
-      nn_pred1 <- nn_pred$net.result
-      
-      # Convert predictions to class labels
-      predicted <- ifelse(nn_pred1 > 0.5, 1, 0)
-      
-      # Evaluate accuracy
-      outs[i] <- mean(predicted == as.numeric(as.character(data.test_1$Flag)))  # Store accuracy result
-    }
-    
-    # Compute and print the mean accuracy across all folds
-    print(mean(outs))
     
     
-    
+
     
     ######################## ######################## ######################## #####################
     #########################Bayesian Learning######################################################
