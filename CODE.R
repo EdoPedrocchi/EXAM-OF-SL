@@ -17,15 +17,13 @@ library(rpart)
 library(partykit) 
 library(rattle) 
 library(rpart.plot) 
-library(ROCR) 
 library(randomForest) 
-library(rpart.plot)
-library(rattle) 
+
 
 library(tidyverse)
-library(caret)
-library(randomForest)
 library(neuralnet)
+library(nnet)     
+library(neuralnet) 
 library(pROC)
 
 library(MASS) 
@@ -35,8 +33,12 @@ library(bootstrap)
 
 
 library(LearnBayes)
-
 library(lattice)
+library(bayestestR)    
+library(rstanarm)
+library(bayesplot)
+library(e1071)
+    
 ######################
 
 
@@ -74,7 +76,7 @@ print(def_perc)
 
 numeric_columns <- names(data)[sapply(data, is.numeric)]
 
-
+##plots
 for (col in numeric_columns) {
   print(
     ggplot(data, aes(x = .data[[col]])) +
@@ -92,7 +94,7 @@ for (col in numeric_columns) {
         labs(title = paste("Boxplot di", col), y = col) +
         theme_minimal()
     )
-    Sys.sleep(1)  # Pausa di 1 secondo tra i grafici
+    Sys.sleep(1)  
   }
     
 cor(data[, sapply(data, is.numeric)])
@@ -104,24 +106,20 @@ cor(data[, sapply(data, is.numeric)])
     heatmap(correlation_matrix, main="correlation matrix", col=heat.colors(10))
     
     
-    
-    #  comparing the distribution of a variable between the two groups
-    ggplot(data,aes(Turnover,fill=Flag))+geom_density(alpha=0.2)
-    ###################
+
+
     
     
-    ############Financial Learning#########
-    
+    ######################
+    #Financial Learning###
+    ######################
    
     
     # Transform "Default" and "Loss" variables to factors
     data$Flag<-as.factor(data$Flag)
 
     
-    # Split the dataset into training and testing samples 
-    # Stratified Sampling 
-    
-  
+    # Split the dataset into trainand test  (use strtified sampling to mantain proportionality) 
   
     set.seed(300)
     perc<-0.7
@@ -133,9 +131,9 @@ cor(data[, sapply(data, is.numeric)])
     # Test Sample
     data.test_1<-data[-div,] # the rest of the data goes here
    
-     ##### ##### ##### #####
-    ###### 1. logistic regression
- ##### ##### ##### ##### ##### #####
+     ##############################
+    ###### 1. logistic regression##
+    ##############################
     
     fit1<-glm(Flag~.,data=data.train_1,family=binomial())
     summary(fit1)
@@ -212,8 +210,8 @@ cor(data[, sapply(data, is.numeric)])
     
     
     
-    ######tree 
-    #  CART decision tree algorithM( minimizes the Gini impurity in each group)
+    ######tree##############################
+    #  CART decision tree algorithm( minimizes the Gini impurity in each group)
     fit1<-rpart(Flag~.,data=data.train,method="class")
     
     # Print tree detail
@@ -282,15 +280,13 @@ cor(data[, sapply(data, is.numeric)])
     accuracy <- sum(diag(fit3$confusion)) / sum(fit3$confusion)
     cat("Accuracy:", round(accuracy * 100, 2), "%")
     
-    #### 3. NEURAL NETWORK
+
     ###########################
     ##### NEURAL NETWORK #####
     ###########################
     
     
-    library(readr)     # Load readr for data handling
-    library(nnet)      # Load nnet for neural network functions
-    library(neuralnet) # Load neuralnet for training neural networks
+    
     
 
     # Train a neural network model on the dataset with normalized data
@@ -327,10 +323,10 @@ cor(data[, sapply(data, is.numeric)])
     
     nn <- neuralnet(Flag ~ ., data=data.train_1.std,
                     hidden=c(5, 3), 
-                    act.fct="logistic",  # Use logistic activation function
-                    err.fct='ce',  # Use cross-entropy error function
-                    linear.output=FALSE,  # Output is categorical, not continuous
-                    lifesign="minimal", # Show minimal training progress output
+                    act.fct="logistic",  
+                    err.fct='ce',  
+                    linear.output=FALSE,  
+                    lifesign="minimal", 
                     stepmax = 1e6)
     # Plot the trained neural network model
     plot(nn)
@@ -378,44 +374,20 @@ cor(data[, sapply(data, is.numeric)])
     
     ######################## ######################## ######################## #####################
     #########################Bayesian Learning######################################################
+
     
-    library(bayestestR)
-    
-library(rstanarm)
-    
-    # Define the prior (Student's t with df=7, location=0, scale=2.5)
+    # Define the prior (Student's t)
     t_prior <- student_t(df = 7, location = 0, scale = 2.5)
     
-    # Fit Bayesian logistic regression using MCMC
-    fit <- stan_glm(Flag ~ .,  # Use all predictors in 'data' to predict 'Flag'
-                    data = data, 
-                    family = binomial(link = "logit"),  # Logistic regression
-                    prior = t_prior, 
-                    prior_intercept = t_prior,
-                    seed = 12345)
-    
-    # Summary of the model
-    summary(fit, digits=3)
-    
-    # Get 50% credible intervals for coefficients
-    round(posterior_interval(fit, prob = 0.5), 3)
-    
-    # Extract and plot residuals
-    residuals <- residuals(fit)
-    plot(residuals, type='l', main="Residuals of Bayesian Logistic Regression")
-    
-    # Check model diagnostics
-    library(bayesplot)
-    mcmc_dens(fit)  # Density plot of posterior distributions
-    hdi(fit)  # Highest Density Interval (credible intervals)
+   
     
     
     
-    ##logisitc regression  to make predictions
+    ##BAYESIAN logisitc regression
     
     
     
-    fit <- stan_glm(Flag ~ .,  # Use all predictors in 'data.train_1' to predict 'Flag'
+    fit <- stan_glm(Flag ~ .,  
                     data = data.train_1, 
                     family = binomial(link = "logit"),  # Logistic regression
                     prior = t_prior, 
@@ -454,14 +426,14 @@ library(rstanarm)
     
     
     
-    
-    ##Naive Bayes classifier
-    library(e1071)
-    
+    ############################
+    ##Naive Bayes classifier###
+    ###########################
+ 
     
     nb_model <- naiveBayes(Flag ~ ., data = data.train_1)
     
-    # Make predictions3
+    # Make predictions
     predictions <- predict(nb_model, data.test_1)
     
     # Evaluate model accuracy
@@ -508,12 +480,7 @@ library(rstanarm)
     
     
     
-    
-    
-    
-    
-    
-    
+
     
     # Naive Bayes: Predicted probabilities
     predicted_probs_nb <- predict(nb_model, data.test_1, type = "raw")  # Type "raw" gives probabilities
@@ -545,7 +512,7 @@ library(rstanarm)
      ##### ##### ##### #####
     ######safe AI ####
   
-    
+    #calculate RGE for random forest
 
     
     
